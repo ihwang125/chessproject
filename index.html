@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Interactive chessboard</title>
+
+    <link rel="stylesheet" href="chessboardjs-1.0.0\css\chessboard-1.0.0.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="chessboardjs-1.0.0\js\chessboard-1.0.0.js"></script>
+
+</head>
+
+<body>
+    <h1>Demo App</h1>
+    <div id="query-container">
+        <input type="text" id="query-input" placeholder="Enter your query and press Enter">
+    </div>
+    <!-- Create a board, customize the size using the 'width' parameter -->
+    <div class="container">
+        <div id="board" style="width: 600px"></div>
+        <div class="buttons">
+            <button id="startBtn">Start Positions</button>
+            <button id="clearBtn">Clear Board</button>
+        </div>
+    </div>
+
+    <div id="response">Response will appear here...</div>
+
+    <!-- JavaScript and JQuery are used for the logic -->
+    <script>
+        var board = Chessboard('board', {
+            draggable: true,                    // Makes pieces draggable
+            dropOffBoard: 'trash',              // Enables dragging off pieces to delete
+            sparePieces: true                   // External bank of pieces
+        })
+
+        $('#startBtn').on('click', board.start) // Set up pieces in the starting position
+        $('#clearBtn').on('click', board.clear) // Clear the board
+    </script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .buttons {
+            margin-top: 15px;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10 px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #query-container {
+            margin: 20px auto;
+        }
+
+        #query-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        #response {
+            margin-top: 20px;
+            font-weight: bold;
+            width: 50%;
+            text-align: center;
+        }
+    </style>
+</body>
+
+</html>
