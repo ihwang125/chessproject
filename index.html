@@ -1,46 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Interactive chessboard</title>
+    <title>Interactive Chessboard</title>
 
-    <link rel="stylesheet" href="chessboardjs-1.0.0\css\chessboard-1.0.0.css">
+    <link rel="stylesheet" href="chessboardjs-1.0.0/css/chessboard-1.0.0.css">
     <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-    <script src="chessboardjs-1.0.0\js\chessboard-1.0.0.js"></script>
+    <script src="chessboardjs-1.0.0/js/chessboard-1.0.0.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script> <!-- Chess.js -->
 
-</head>
-
-<body>
-    <h1>Demo App</h1>
-    <div id="query-container">
-        <input type="text" id="query-input" placeholder="Enter your query and press Enter">
-    </div>
-    <!-- Create a board, customize the size using the 'width' parameter -->
-    <div class="container">
-        <div id="board" style="width: 600px"></div>
-        <div class="buttons">
-            <button id="startBtn">Start Positions</button>
-            <button id="clearBtn">Clear Board</button>
-        </div>
-    </div>
-
-    <div id="response">Response will appear here...</div>
-
-    <!-- JavaScript and JQuery are used for the logic -->
-    <script>
-        var board = Chessboard('board', {
-            draggable: true,                    // Makes pieces draggable
-            dropOffBoard: 'trash',              // Enables dragging off pieces to delete
-            sparePieces: true                   // External bank of pieces
-        })
-
-        $('#startBtn').on('click', board.start) // Set up pieces in the starting position
-        $('#clearBtn').on('click', board.clear) // Clear the board
-    </script>
     <style>
         body {
             display: flex;
@@ -53,35 +24,24 @@
             font-family: Arial, sans-serif;
             padding: 20px;
         }
-
         .container {
             display: flex;
             justify-content: center;
             flex-direction: column;
             align-items: center;
         }
-
         .buttons {
             margin-top: 15px;
         }
-
         button {
             margin: 5px;
-            padding: 10 px 20px;
+            padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
         }
-
         #query-container {
             margin: 20px auto;
         }
-
-        #query-input {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-        }
-
         #response {
             margin-top: 20px;
             font-weight: bold;
@@ -89,6 +49,69 @@
             text-align: center;
         }
     </style>
-</body>
+</head>
 
+<body>
+    <h1>Chess AI</h1>
+    <div id="query-container">
+        <button id="getMoveBtn">Get Best Move</button>
+    </div>
+
+    <div class="container">
+        <div id="board" style="width: 600px"></div>
+        <div class="buttons">
+            <button id="startBtn">Start Position</button>
+            <button id="clearBtn">Clear Board</button>
+        </div>
+    </div>
+
+    <div id="response">Response will appear here...</div>
+
+    <script>
+        var game = new Chess();
+        var board = Chessboard('board', {
+            draggable: true,                   
+            position: 'start',                 
+            onDrop: handleMove,                
+            onSnapEnd: updateBoard             
+        });
+
+        function handleMove(source, target) {
+            var move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q' // Always promote to queen
+            });
+
+            if (move === null) return 'snapback'; // Illegal move, return piece
+        }
+
+        function updateBoard() {
+            board.position(game.fen());
+        }
+
+        function getBestMove() {
+            fetch("http://127.0.0.1:5000/query", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ fen: game.fen() })
+            })
+            .then(response => response.json())
+            .then(data => {
+                var bestMove = data.best_move;
+                var explanation = data.response;
+
+                game.move(bestMove);
+                board.position(game.fen());
+
+                document.getElementById("response").innerText = `Best Move: ${bestMove}\nExplanation: ${explanation}`;
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        document.getElementById("getMoveBtn").addEventListener("click", getBestMove);
+        document.getElementById("startBtn").addEventListener("click", () => { game.reset(); board.start(); });
+        document.getElementById("clearBtn").addEventListener("click", () => { game.clear(); board.clear(); });
+    </script>
+</body>
 </html>
