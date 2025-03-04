@@ -69,49 +69,63 @@
 
     <script>
         var game = new Chess();
-        var board = Chessboard('board', {
-            draggable: true,                   
-            position: 'start',                 
-            onDrop: handleMove,                
-            onSnapEnd: updateBoard             
-        });
+var board = Chessboard('board', {
+    draggable: true,                   
+    position: 'start',                 
+    onDrop: handleMove,                
+    onSnapEnd: updateBoard             
+});
 
-        function handleMove(source, target) {
-            var move = game.move({
-                from: source,
-                to: target,
-                promotion: 'q' // Always promote to queen
-            });
+function handleMove(source, target) {
+    var move = game.move({
+        from: source,
+        to: target,
+        promotion: 'q' // Always promote to queen
+    });
 
-            if (move === null) return 'snapback'; // Illegal move, return piece
-        }
+    if (move === null) return 'snapback'; // Illegal move, return piece
 
-        function updateBoard() {
-            board.position(game.fen());
-        }
+    checkGameOver();
+}
 
-        function getBestMove() {
-            fetch("http://127.0.0.1:5000/query", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ fen: game.fen() })
-            })
-            .then(response => response.json())
-            .then(data => {
-                var bestMove = data.best_move;
-                var explanation = data.response;
+function updateBoard() {
+    board.position(game.fen());
+}
 
-                game.move(bestMove);
-                board.position(game.fen());
+function checkGameOver() {
+    if (game.in_checkmate()) {
+        let winner = game.turn() === 'w' ? "Black" : "White"; // The losing side is the one who is about to move
+        document.getElementById("response").innerText = `Checkmate! ${winner} wins!`;
+    } else if (game.in_draw()) {
+        document.getElementById("response").innerText = "It's a draw!";
+    }
+}
 
-                document.getElementById("response").innerText = `Best Move: ${bestMove}\nExplanation: ${explanation}`;
-            })
-            .catch(error => console.error("Error:", error));
-        }
+function getBestMove() {
+    fetch("http://127.0.0.1:5000/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fen: game.fen() })
+    })
+    .then(response => response.json())
+    .then(data => {
+        var bestMove = data.best_move;
+        var explanation = data.response;
 
-        document.getElementById("getMoveBtn").addEventListener("click", getBestMove);
-        document.getElementById("startBtn").addEventListener("click", () => { game.reset(); board.start(); });
-        document.getElementById("clearBtn").addEventListener("click", () => { game.clear(); board.clear(); });
+        game.move(bestMove);
+        board.position(game.fen());
+
+        document.getElementById("response").innerText = `Best Move: ${bestMove}\nExplanation: ${explanation}`;
+
+        checkGameOver();
+    })
+    .catch(error => console.error("Error:", error));
+}
+
+document.getElementById("getMoveBtn").addEventListener("click", getBestMove);
+document.getElementById("startBtn").addEventListener("click", () => { game.reset(); board.start(); document.getElementById("response").innerText = "Game restarted."; });
+document.getElementById("clearBtn").addEventListener("click", () => { game.clear(); board.clear(); document.getElementById("response").innerText = "Board cleared."; });
+        
     </script>
 </body>
 </html>
