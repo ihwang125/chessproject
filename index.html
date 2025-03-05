@@ -102,24 +102,36 @@ function checkGameOver() {
 }
 
 function getBestMove() {
-    fetch("http://127.0.0.1:5000/query", {
+    fetch("http://127.0.0.1:5000/query", {  // Ensure this is your correct Flask API URL
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fen: game.fen() })
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ fen: game.fen() })  // Send the FEN position of the current game
     })
     .then(response => response.json())
     .then(data => {
-        var bestMove = data.best_move;
-        var explanation = data.response;
+        if (data.best_move && data.response) {
+            // Successfully received best move and explanation from the server
+            var bestMove = data.best_move;
+            var explanation = data.response;
 
-        game.move(bestMove);
-        board.position(game.fen());
+            game.move(bestMove);  // Make the best move in the game state
+            board.position(game.fen());  // Update the board display
 
-        document.getElementById("response").innerText = `Best Move: ${bestMove}\nExplanation: ${explanation}`;
+            // Display the best move and explanation on the UI
+            document.getElementById("response").innerText = `Best Move: ${bestMove}\nExplanation: ${explanation}`;
+        } else {
+            // Handle the case where the best move or explanation is missing
+            document.getElementById("response").innerText = "Could not get the best move from Stockfish.";
+        }
 
-        checkGameOver();
+        checkGameOver();  // Check if the game is over
     })
-    .catch(error => console.error("Error:", error));
+    .catch(error => {
+        console.error("Error:", error);
+        document.getElementById("response").innerText = "Error occurred while fetching the best move.";
+    });
 }
 
 document.getElementById("getMoveBtn").addEventListener("click", getBestMove);
