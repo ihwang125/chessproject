@@ -4,13 +4,12 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <title>Interactive Chessboard</title>
-
+    
     <link rel="stylesheet" href="chessboardjs-1.0.0/css/chessboard-1.0.0.css">
     <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
     <script src="chessboardjs-1.0.0/js/chessboard-1.0.0.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script> <!-- Chess.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
     <style>
         body {
@@ -69,75 +68,69 @@
 
     <script>
         var game = new Chess();
-var board = Chessboard('board', {
-    draggable: true,                   
-    position: 'start',                 
-    onDrop: handleMove,                
-    onSnapEnd: updateBoard             
-});
+        var board = Chessboard('board', {
+            draggable: true,
+            position: 'start',
+            onDrop: handleMove,
+            onSnapEnd: updateBoard
+        });
 
-function handleMove(source, target) {
-    var move = game.move({
-        from: source,
-        to: target,
-        promotion: 'q' // Always promote to queen
-    });
+        function handleMove(source, target) {
+            var move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q' // Always promote to queen
+            });
 
-    if (move === null) return 'snapback'; // Illegal move, return piece
+            if (move === null) return 'snapback'; // Illegal move, return piece
 
-    checkGameOver();
-}
-
-function updateBoard() {
-    board.position(game.fen());
-}
-
-function checkGameOver() {
-    if (game.in_checkmate()) {
-        let winner = game.turn() === 'w' ? "Black" : "White"; // The losing side is the one who is about to move
-        document.getElementById("response").innerText = `Checkmate! ${winner} wins!`;
-    } else if (game.in_draw()) {
-        document.getElementById("response").innerText = "It's a draw!";
-    }
-}
-
-function getBestMove() {
-    fetch("http://127.0.0.1:5000/query", {  // Ensure this is your correct Flask API URL
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ fen: game.fen() })  // Send the FEN position of the current game
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.best_move && data.response) {
-            // Successfully received best move and explanation from the server
-            var bestMove = data.best_move;
-            var explanation = data.response;
-
-            game.move(bestMove);  // Make the best move in the game state
-            board.position(game.fen());  // Update the board display
-
-            // Display the best move and explanation on the UI
-            document.getElementById("response").innerText = `Best Move: ${bestMove}\nExplanation: ${explanation}`;
-        } else {
-            // Handle the case where the best move or explanation is missing
-            document.getElementById("response").innerText = "Could not get the best move from Stockfish.";
+            checkGameOver();
         }
 
-        checkGameOver();  // Check if the game is over
-    })
-    .catch(error => {
-        console.error("Error:", error);
-        document.getElementById("response").innerText = "Error occurred while fetching the best move.";
-    });
-}
+        function updateBoard() {
+            board.position(game.fen());
+        }
 
-document.getElementById("getMoveBtn").addEventListener("click", getBestMove);
-document.getElementById("startBtn").addEventListener("click", () => { game.reset(); board.start(); document.getElementById("response").innerText = "Game restarted."; });
-document.getElementById("clearBtn").addEventListener("click", () => { game.clear(); board.clear(); document.getElementById("response").innerText = "Board cleared."; });
-        
+        function checkGameOver() {
+            if (game.in_checkmate()) {
+                let winner = game.turn() === 'w' ? "Black" : "White"; // The losing side is the one who is about to move
+                document.getElementById("response").innerText = `Checkmate! ${winner} wins!`;
+            } else if (game.in_draw()) {
+                document.getElementById("response").innerText = "It's a draw!";
+            }
+        }
+
+        function getBestMove() {
+            fetch("http://127.0.0.1:5000/query", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ fen: game.fen() })  // Sends the FEN notation
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("API Response:", data);  // Debugging log
+                if (data.best_move && data.best_move !== "N/A") {
+                    let bestMove = data.best_move;
+                    let evaluation = data.evaluation;
+                    let continuation = data.continuation;
+                    
+                    game.move(bestMove);
+                    board.position(game.fen());
+                    document.getElementById("response").innerText = 
+                        `Best Move: ${bestMove}\nEvaluation: ${evaluation}\nContinuation: ${continuation}`;
+                } else {
+                    document.getElementById("response").innerText = "Error getting best move. Try again.";
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching best move:", error);
+                document.getElementById("response").innerText = `Error fetching best move. ${error.message}`;
+            });
+        }
+
+        document.getElementById("getMoveBtn").addEventListener("click", getBestMove);
+        document.getElementById("startBtn").addEventListener("click", () => { game.reset(); board.start(); document.getElementById("response").innerText = "Game restarted."; });
+        document.getElementById("clearBtn").addEventListener("click", () => { game.clear(); board.clear(); document.getElementById("response").innerText = "Board cleared."; });
     </script>
 </body>
 </html>
