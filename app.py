@@ -6,7 +6,7 @@ import os
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-genai.configure(api_key="GEMINI_API_KEY")
+genai.configure(api_key=GEMINI_API_KEY)
 
 app = Flask(__name__)
 CORS(app)  # Allow all domains for now (development only)
@@ -47,7 +47,7 @@ def get_gemini_explanation(fen, best_move):
     """Send the FEN and best move to Gemini for explanation."""
     try:
         model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(f"Explain why {best_move} is the best move in this position: {fen}", generation_config={"max_output_tokens": 100})
+        response = model.generate_content(f"As a chess tutor, explain why {best_move} is the best move in this position: {fen} as briefly as possible", generation_config={"max_output_tokens": 200})
 
         return response.text if response else "No explanation available."
     except Exception as e:
