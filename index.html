@@ -112,12 +112,12 @@
                 if (data.best_move && data.best_move !== "N/A") {
                     let bestMove = data.best_move;
                     let evaluation = data.evaluation;
-                    let continuation = data.continuation;
+                    let explanation = data.explanation;
                     
                     game.move(bestMove);
                     board.position(game.fen());
                     document.getElementById("response").innerText = 
-                        `Best Move: ${bestMove}\nEvaluation: ${evaluation}\nContinuation: ${continuation}`;
+                        `Best Move: ${bestMove}\nEvaluation: ${evaluation}\nExplanation: ${explanation}`;
                 } else {
                     document.getElementById("response").innerText = "Error getting best move. Try again.";
                 }

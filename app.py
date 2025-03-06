@@ -1,6 +1,12 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS  # To handle cross-origin requests
 import requests
+import google.generativeai as genai
+import os
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+genai.configure(api_key="GEMINI_API_KEY")
 
 app = Flask(__name__)
 CORS(app)  # Allow all domains for now (development only)
@@ -26,16 +32,27 @@ def query():
             best_move_raw = stockfish_data.get("bestmove", "Unknown")
             best_move = best_move_raw.split()[1] if len(best_move_raw.split()) > 1 else "Unknown"
             eval_score = stockfish_data.get("evaluation", "N/A")
-            continuation = stockfish_data.get("continuation", "N/A")
+            explanation = get_gemini_explanation(fen, best_move)
             return jsonify({
                 "best_move": best_move,
                 "evaluation": eval_score,
-                "continuation": continuation
+                "explanation": explanation
             })
         else:
             return jsonify({"error": stockfish_data.get("data", "Unknown error")}), 400
     else:
         return jsonify({"error": "Stockfish API request failed."}), 500
+    
+def get_gemini_explanation(fen, best_move):
+    """Send the FEN and best move to Gemini for explanation."""
+    try:
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(f"Explain why {best_move} is the best move in this position: {fen}", generation_config={"max_output_tokens": 100})
+
+        return response.text if response else "No explanation available."
+    except Exception as e:
+        print(f"Gemini API error: {e}")
+        return "Error fetching explanation."
 
 if __name__ == "__main__":
     app.run(debug=True)
