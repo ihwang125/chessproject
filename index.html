@@ -53,7 +53,7 @@
 <body>
     <h1>Chess AI</h1>
     <div id="query-container">
-        <button id="getMoveBtn">Get Best Move</button>
+        <button id="getMoveBtn">Hint</button>
     </div>
 
     <div class="container">
@@ -74,6 +74,7 @@
             onDrop: handleMove,
             onSnapEnd: updateBoard
         });
+        var turn = false;
 
         function handleMove(source, target) {
             var move = game.move({
@@ -81,6 +82,7 @@
                 to: target,
                 promotion: 'q' // Always promote to queen
             });
+            turn = !turn;
 
             if (move === null) return 'snapback'; // Illegal move, return piece
 
@@ -104,7 +106,7 @@
             fetch("http://127.0.0.1:5000/query", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ fen: game.fen() })  // Sends the FEN notation
+                body: JSON.stringify({ fen: game.fen(), player: turn })  // Sends the FEN notation
             })
             .then(response => response.json())
             .then(data => {
@@ -117,7 +119,7 @@
                     game.move(bestMove);
                     board.position(game.fen());
                     document.getElementById("response").innerText = 
-                        `Best Move: ${bestMove}\nEvaluation: ${evaluation}\nExplanation: ${explanation}`;
+                        `${explanation}`;
                 } else {
                     document.getElementById("response").innerText = "Error getting best move. Try again.";
                 }
